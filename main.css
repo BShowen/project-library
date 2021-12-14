@@ -1,0 +1,88 @@
+@font-face {
+  font-family: 'Roboto';
+  src: url('./Roboto/Roboto-Regular.ttf');
+}
+
+@font-face {
+  font-family: 'Roboto-bold';
+  src: url('./Roboto/Roboto-Bold.ttf');
+}
+
+@font-face {
+  font-family: 'Roboto-medium';
+  src: url('./Roboto/Roboto-Medium.ttf');
+}
+
+*{
+  box-sizing: border-box;
+  margin: 0; 
+  padding: 0;
+  font-family: 'Roboto';
+}
+
+/* Nav */
+#nav{
+  width: 100%;
+  display: flex;
+  flex-direction: row;
+  flex-wrap: nowrap;
+  justify-content: end;
+  padding: 10px;
+  border-bottom: 2px solid black;
+}
+
+#nav button {
+  width: 90px;
+  height: 40px;
+  background-color: #06f;
+  border: none;
+  border-radius: 10px;
+  color: #FFF;
+  font-family: 'Roboto-medium';
+  font-size: 16px;
+}
+
+#nav button:hover{
+  cursor: pointer;
+  background-color: #0052cc;
+  transition: 250ms;
+}
+
+/* Library */
+#library {
+  width: 100%;
+  padding: 50px;
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  gap: 50px;
+  justify-content: flex-start;
+
+}
+
+/* Cards that hold books */
+.card{
+  width: 400px;
+  background-color: #FFF;
+  border-radius: 10px;
+  box-shadow: 0px 5px 30px rgb(0 0 0 / 15%);
+  padding: 10px;
+}
+
+/* Book information containers */
+.book_information {
+  display: flex;
+  justify-content: center;
+  padding: 10px 0px;
+  /* border: 2px solid purple; */
+}
+
+/* Book title */
+div.title p{ 
+  font-size: 36px;
+  font-family: 'Roboto-bold';
+}
+
+div.title {
+  border-bottom: 2px solid rgb(0 0 0 / 15%);
+}
