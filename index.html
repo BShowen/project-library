@@ -1,20 +1,58 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
+  <!-- <meta charset="UTF-8">
   <meta http-equiv="X-UA-Compatible" content="IE=edge">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"> -->
   <link rel="stylesheet" href="./main.css">
   <script src="./script.js" defer></script>
   <title>Document</title>
 </head>
 <body>
-  <div id="app">
-    <div id="nav">
-      <button>New Book</button>
-    </div>
+  <div id="nav">
+    <button>New Book</button>
+  </div>
     
-    <div id="library"></div>
+  <div id="library"></div>
+
+  <div class="modal hidden">
+    <div class="card">
+      <form action="#">
+        <div id="formTitle">
+          <h1>New Book</h1>
+          <p>Add a new book to your library</p>
+        </div>
+        
+        <div>
+          <input type="text" id="bookTitle" placeholder="Book Title">
+        </div>
+  
+        <div>
+          <input type="text" id="bookAuthor" placeholder="Book Author">
+        </div>
+  
+        <div>
+          <input type="number" id="bookPages" min="0" step="1" placeholder="Number of pages">
+        </div>
+  
+        <div id="radioInputContainer">
+          <p>Have you read this book already?</p>
+          <div>
+            <input type="radio" name="readStatus" id="true" value="true">
+            <label for="true">Yes</label>
+          </div>
+          <div>
+            <input type="radio" name="readStatus" id="false" value="false">
+            <label for="false">No</label>
+          </div>
+        </div>
+        
+        <div>
+          <button type="submit" id="formSubmitButton">Submit</button>
+        </div>
+  
+      </form>
+    </div>
   </div>
 </body>
 </html>

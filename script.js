@@ -65,8 +65,28 @@ function BookElement(params){
 // This is test code. Delete when finished with it. 
 let testBook_1 = new Book({title: "Book 1", author: "Book 1 Author", pages: 300, read: true});
 let testBook_2 = new Book({title: "Book 2", author: "Book 2 Author", pages: 1002, read: false});
+let testBook_3 = new Book({title: "Book 3", author: "Book 2 Author", pages: 1002, read: false});
+let testBook_4 = new Book({title: "Book 4", author: "Book 2 Author", pages: 1002, read: false});
+let testBook_5 = new Book({title: "Book 5", author: "Book 2 Author", pages: 1002, read: false});
+let testBook_6 = new Book({title: "Book 6", author: "Book 2 Author", pages: 1002, read: false});
+let testBook_7 = new Book({title: "Book 7", author: "Book 2 Author", pages: 1002, read: false});
+let testBook_8 = new Book({title: "Book 8", author: "Book 2 Author", pages: 1002, read: false});
+let testBook_9 = new Book({title: "Book 9", author: "Book 2 Author", pages: 1002, read: false});
+let testBook_10 = new Book({title: "Book 10", author: "Book 2 Author", pages: 1002, read: false});
+let testBook_11 = new Book({title: "Book 11", author: "Book 2 Author", pages: 1002, read: false});
+let testBook_12 = new Book({title: "Book 12", author: "Book 2 Author", pages: 1002, read: false});
 addBookToLibrary(testBook_1);
 addBookToLibrary(testBook_2);
+addBookToLibrary(testBook_3);
+addBookToLibrary(testBook_4);
+addBookToLibrary(testBook_5);
+addBookToLibrary(testBook_6);
+addBookToLibrary(testBook_7);
+addBookToLibrary(testBook_8);
+addBookToLibrary(testBook_9);
+addBookToLibrary(testBook_10);
+addBookToLibrary(testBook_11);
+addBookToLibrary(testBook_12);
 
 // Here, we are adding the books to the DOM. 
 const libraryElement = document.querySelector("#library");
@@ -75,4 +95,72 @@ library.forEach( book => {
   const currentBook = new BookElement(book);
   card.appendChild(currentBook);
   libraryElement.appendChild(card);
+});
+
+
+
+// Nav button
+const navButton = document.querySelector("#nav > button");
+navButton.addEventListener("click", ()=>{
+  showModalForm();
+});
+navButton.click();
+
+// Show the modal form. 
+function showModalForm(){
+  // Prevent scrolling while modal is open. 
+  const html = document.querySelector("html");
+  html.classList.toggle("fixed");
+
+  // Show the model. 
+  const modalWindow = document.querySelector(".modal");
+  modalWindow.classList.toggle("hidden");
+  // Dim the screen slowly. 
+  setTimeout(()=>{
+    modalWindow.style.backgroundColor = "rgba(0,0,0,0.50)";
+  }, 1);
+
+  // Remove focus from the button. Otherwise if the user presses the space bar with focus on the button it will cause a bug with the way the modal behaves afterwards.
+  navButton.blur(); 
+}
+
+// Let the user close the modal by hitting "escape";
+(function escapeKey(){
+  document.addEventListener("keydown", (e)=>{
+
+    const modalWindow = document.querySelector(".modal");
+    
+    if(e.code.toLowerCase() === "escape" && !modalWindow.classList.contains("hidden")){
+      // Allow the body of the page to scroll again. 
+      const html = document.querySelector("html");
+      html.classList.toggle("fixed");
+  
+      // Hide the modal. 
+      modalWindow.classList.toggle("hidden");
+      modalWindow.style.backgroundColor = "rgba(0,0,0,0.00)";
+    }
+  });
+})();
+
+// Allow the modal to be closed by clicking anywhere outside the form. 
+(function closeModalWithClick(){
+  const modal = document.querySelector(".modal");
+  modal.addEventListener("click", (e)=>{
+    if(e.target.classList.contains("modal")){ 
+      const modalWindow = document.querySelector(".modal");
+      // Allow the body of the page to scroll again. 
+      const html = document.querySelector("html");
+      html.classList.toggle("fixed");
+  
+      // Hide the modal. 
+      modalWindow.classList.toggle("hidden");
+      modalWindow.style.backgroundColor = "rgba(0,0,0,0.00)";
+    }
+  });
+})();
+
+// Handle form submission. 
+const formSubmitButton = document.querySelector("#formSubmitButton");
+formSubmitButton.addEventListener("click", (e) => {
+  e.preventDefault();
 });
