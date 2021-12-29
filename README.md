@@ -1,3 +1,4 @@
+![Screen shot](screenShot.png)
 # Project: Library
   This is a simple application that lets you store the books you have read or want to read.
 ## Skills learned during this project
