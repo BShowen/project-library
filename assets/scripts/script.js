@@ -32,7 +32,7 @@ const emitter = (function (){
     }
   } 
 
-  return { on, off, emit, events }
+  return { on, off, emit }
 })();
 
 
@@ -48,13 +48,10 @@ class Book{
 
   toggleStatus(){
     this.read = !this.read;
+    emitter.emit("updatedABook");
     emitter.emit("toggleStatus");
   }
 }
-
-// Store all of the books in this array. 
-let library = [new Book({title: "Test_1", author: "Test", pages: 300, read: false }), new Book({title: "Test_2", author: "Test", pages: 300, read: false })];
-
 
 // Creates a card element and returns it. 
 class Card{
@@ -70,10 +67,6 @@ class Card{
     // Create the card div.
     this.#card = document.createElement("div");
     this.#card.className = "card";
-
-    // Index is used to delete cards from their storage array. 
-    this.#index = index;
-    this.#card.dataset.index = index;
 
     this.#cardHeader = new CardHeader({title: book.title}).render();
     this.#cardBody = new CardBody(book).render();
@@ -101,10 +94,6 @@ class Card{
     }).render();
   }
 
-  get index(){
-    return this.#index;
-  }
-
   // Create the card setFooter. 
   #setFooter(){
     this.#cardFooter = document.createElement("div");
@@ -119,31 +108,6 @@ class Card{
     this.#card.append(this.#cardFooter);
     return this.#card;
   }
-
-  // statusButton(){
-  //   const button = document.createElement("button");
-  //   button.className = "toggleReadStatus";
-  //   button.innerText = "Toggle read status";
-  //   // Toggle book read status on button click. 
-  //   button.addEventListener("click", ()=>{
-  //     book.toggleStatus();
-  //     updateDOM();
-  //   });
-  // }
-
-  // deleteButton(){
-  //   const button = document.createElement("button");
-  //   button.className = "delete";
-  //   button.innerText = "Delete";
-  //   // Delete the book when clicked.
-  //   button.addEventListener("click", (e)=>{
-  //     // This is the index in the library array for the book that was clicked. 
-  //     const index = e.target.parentNode.parentNode.dataset.index;
-  //     library.splice(index, 1);
-  //     updateDOM();
-  //   });
-  // }
-
 }
 
 // This function handles the click event when user clicks on the "Toggle read status" button.
@@ -164,9 +128,9 @@ class Card{
 // I then call the appropriate method on the Book object to toggle the saveStatus (which is used to delete and un-delete books). 
 (function(){
   const deleteBook = function(index){
-    // library.splice(index, 1);
     this.saveStatus = !this.saveStatus;
-    emitter.emit("deletedBook");
+    console.log(this);
+    emitter.emit("deletedABook", index);
   }
   emitter.on("deleteBook", deleteBook);
 })();
@@ -287,22 +251,24 @@ class CardBody{
   }
 }
 
-// Here, we are adding the books to the DOM. 
-const DOMStateHandler = (function(){
+// Here, we handle the state of the DOM.
+const app = (function(){
   const updateDOM = function(){
     const libraryElement = document.querySelector("#library");
     libraryElement.innerHTML = "";
-    library.forEach( (book, index) => {
+    DB.getBooks().forEach( (book, index) => {
       if(book.saveStatus){
         const card = new Card(book, index);
         libraryElement.appendChild(card.render());
       }
     });
-  }
+  };
 
   emitter.on("newBook", updateDOM);
   emitter.on("toggleStatus", updateDOM);
-  emitter.on("deletedBook", updateDOM);
+  emitter.on("updateState", updateDOM);
+
+  return {start: updateDOM }
 })();
 
 // Nav button
@@ -350,10 +316,9 @@ const formSubmitButton = document.querySelector("#formSubmitButton");
 formSubmitButton.addEventListener("click", (e) => {
   e.preventDefault();
   if( formValid() ){
-    library.push(getFormData());
+    DB.push(getFormData());
     document.querySelector("form").reset();
     closeModal();
-    // updateDOM();
     emitter.emit("newBook");
   }else{
     highlightErrors();
@@ -429,17 +394,58 @@ function getFormData(){
   });
 }
 
-emitter.emit("newBook");
 
-class Test{
-  #name;
-  constructor({name}){
-    this.#name = name;
+const DB = (function(){
+  class LocalStorage{
+    #defaultLibrary = JSON.stringify([
+      new Book({
+        title: "Atomic Habits", 
+        author: "James Clear", 
+        pages: 320, 
+        read: true 
+      }), 
+      new Book({
+        title: "The power of now", 
+        author: "Ekhart Tolle", 
+        pages: 236, 
+        read: false 
+      }),
+      new Book({
+        title: "Deep work", 
+        author: "Cal Newport", 
+        pages: 296, 
+        read: true
+      }),
+    ]);
+    #state = [];
+    constructor(){
+      window.localStorage.getItem("books") ||  window.localStorage.setItem("books", this.#defaultLibrary);
+      this.#state = JSON.parse(window.localStorage.getItem("books")).map( book => new Book(book) );
+      emitter.on("updatedABook", this.#save.bind(this));
+      emitter.on("deletedABook", this.#delete.bind(this));
+    }
+  
+    //book = {title, author, pages, read}
+    push(book){
+      this.#state.push(book);
+      window.localStorage.setItem("books", JSON.stringify(this.#state));
+    }
+  
+    getBooks(){
+      return this.#state;
+    }
+
+    #save = function(){
+      window.localStorage.setItem("books", JSON.stringify(this.#state));
+    }
+
+    #delete = function(index){
+      this.#state.splice(index, 1);
+      this.#save();
+      emitter.emit("updateState");
+    }
   }
-  set name({name}){
-    this.#name = name;
-  }
-  get name(){
-    return this.#name;
-  }
-}
+  return new LocalStorage();
+})();
+
+app.start();
