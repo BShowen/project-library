@@ -1,165 +1,309 @@
+const emitter = (function (){
+  const events = {}
+
+  const on = function(eventName, callBack){
+    events[eventName] = events[eventName] || [];
+    events[eventName].push(callBack);
+  }
+
+  // options are used to bind the callers "this" to the callback function. 
+  const emit = function(eventName, data, options={}){
+    if(events[eventName]){
+      events[eventName].forEach( function(callBack){
+        if(!!options['this']){
+          console.log("binding this");
+          callBack.call(options['this'], data);
+        }else{
+          callBack(data);
+        }
+      }); 
+    }
+  }
+
+  const off = function(eventName, callBack){
+    if(events[eventName] && events[eventName].includes(callBack)){
+      const eventsList = events[eventName];
+      const index = events[eventName].indexOf(callBack);
+      eventsList.splice(index, 1);
+      // Remove the eventName list if it's now empty. 
+      if(eventList.length == 0){
+        delete eventList[eventName];
+      }
+    }
+  } 
+
+  return { on, off, emit, events }
+})();
+
+
+// Book class.
+class Book{
+  saveStatus = true;
+  constructor({title, author, pages, read}){
+    this.title = title;
+    this.author = author;
+    this.pages = pages;
+    this.read = read;
+  }
+
+  toggleStatus(){
+    this.read = !this.read;
+    emitter.emit("toggleStatus");
+  }
+}
+
 // Store all of the books in this array. 
-let library = [];
+let library = [new Book({title: "Test_1", author: "Test", pages: 300, read: false }), new Book({title: "Test_2", author: "Test", pages: 300, read: false })];
 
-// Book constructor. 
-// params is an object that has string: title, string: author, int: pages and boolean: read
-function Book(params){
-  this.title = params.title;
-  this.author = params.author;
-  this.pages = params.pages;
-  this.read = params.read;
-}
-
-Book.prototype.toggleStatus = function(){
-  this.read = !this.read;
-}
-
-// Adds a book to the library. 
-function addBookToLibrary(book){
-  const startingLibrary = library.length;
-  library.push(book);
-  return library.length > startingLibrary;
-}
 
 // Creates a card element and returns it. 
-function Card(book){
-  // Create the card div.
-  const card = document.createElement("div");
-  card.className = "card";
+class Card{
+  #index;
+  #card;
+  #cardHeader;
+  #cardBody;
+  #toggleButton;
+  #deleteButton;
+  #cardFooter;
+  constructor(book, index){
 
-  // Create the card header.
-  const cardHeader = document.createElement("div");
-  cardHeader.className = "card_header";
-  const titleDiv = document.createElement("div");
-  const titleName = document.createElement("p");
-  titleName.textContent = book.title;
-  titleDiv.appendChild(titleName)
-  cardHeader.appendChild(titleDiv);
-  card.appendChild(cardHeader);
+    // Create the card div.
+    this.#card = document.createElement("div");
+    this.#card.className = "card";
 
-  // Create card body.
-  const cardBody = createCardBody(book);
-  card.appendChild(cardBody);
+    // Index is used to delete cards from their storage array. 
+    this.#index = index;
+    this.#card.dataset.index = index;
 
-  // Create the card footer. 
-  const cardFooter = document.createElement("div");
-  cardFooter.className = "card_footer";
+    this.#cardHeader = new CardHeader({title: book.title}).render();
+    this.#cardBody = new CardBody(book).render();
+    this.#setFooter();
 
-  const toggleReadStatusButton = document.createElement("button");
-  toggleReadStatusButton.className = "toggleReadStatus";
-  toggleReadStatusButton.innerText = "Toggle read status";
-  // Toggle book read status on button click. 
-  toggleReadStatusButton.addEventListener("click", ()=>{
-    book.toggleStatus();
-    updateDOM();
-  });
+    this.#toggleButton = new Button({
+      className: "toggleReadStatus", 
+      innerText: "Toggle read status", 
+      callBack: () => { emitter.emit("toggle", null, {this: book}) },
+      // I dont use this code because now Card is more coupled with Book relative to the line of code above this comment. 
+      // callBack: ()=> {
+      //   book.toggleStatus();
+      //   console.log("clicked");
+      //   console.log(book);
+      // },
+    }).render();
 
-  const deleteButton = document.createElement("button");
-  deleteButton.className = "delete";
-  deleteButton.innerText = "Delete";
-  // Delete the book when clicked.
-  deleteButton.addEventListener("click", (e)=>{
-    // This is the index in the library array for the book that was clicked. 
-    const index = e.target.parentNode.parentNode.dataset.index;
-    library[index] = null;
-    updateDOM();
-  })
-  
-  cardFooter.appendChild(toggleReadStatusButton);
-  cardFooter.appendChild(deleteButton);
+    this.#deleteButton = new Button({
+      className: "delete", 
+      innerText: "Delete", 
+      callBack: function(e){
+        e.preventDefault();
+        emitter.emit("deleteBook", index, {this: book});
+      },
+    }).render();
+  }
 
-  card.appendChild(cardFooter);
-  return card;
+  get index(){
+    return this.#index;
+  }
+
+  // Create the card setFooter. 
+  #setFooter(){
+    this.#cardFooter = document.createElement("div");
+    this.#cardFooter.className = "card_footer";
+  }
+
+  render(){
+    this.#cardFooter.appendChild(this.#toggleButton);
+    this.#cardFooter.appendChild(this.#deleteButton);
+    this.#card.appendChild(this.#cardHeader);
+    this.#card.appendChild(this.#cardBody);
+    this.#card.append(this.#cardFooter);
+    return this.#card;
+  }
+
+  // statusButton(){
+  //   const button = document.createElement("button");
+  //   button.className = "toggleReadStatus";
+  //   button.innerText = "Toggle read status";
+  //   // Toggle book read status on button click. 
+  //   button.addEventListener("click", ()=>{
+  //     book.toggleStatus();
+  //     updateDOM();
+  //   });
+  // }
+
+  // deleteButton(){
+  //   const button = document.createElement("button");
+  //   button.className = "delete";
+  //   button.innerText = "Delete";
+  //   // Delete the book when clicked.
+  //   button.addEventListener("click", (e)=>{
+  //     // This is the index in the library array for the book that was clicked. 
+  //     const index = e.target.parentNode.parentNode.dataset.index;
+  //     library.splice(index, 1);
+  //     updateDOM();
+  //   });
+  // }
+
 }
 
-// Create a new HTML book element and returns it. 
+// This function handles the click event when user clicks on the "Toggle read status" button.
+// I use an event emitter and this function listens for a specific event. 
+// When that event happens, the context of this function is set to the context of the button that was clicked, which is a Book object. 
+// I then call the appropriate method on the Book object to toggle the status change. 
+(function(){
+  // Context is passed in from the caller. It is the "this" from the calling object. 
+  const toggleBookStatus = function(){
+    this.toggleStatus();
+  }
+  emitter.on("toggle", toggleBookStatus);
+})();
+
+// This function handles the click event when user clicks on the "Delete" button.
+// I use an event emitter and this function listens for a specific event. 
+// When that event happens, the context of this function is set to the context of the button that was clicked, which is a Book object. 
+// I then call the appropriate method on the Book object to toggle the saveStatus (which is used to delete and un-delete books). 
+(function(){
+  const deleteBook = function(index){
+    // library.splice(index, 1);
+    this.saveStatus = !this.saveStatus;
+    emitter.emit("deletedBook");
+  }
+  emitter.on("deleteBook", deleteBook);
+})();
+
+class Button{
+  #button;
+  constructor({ className, innerText, callBack }){
+    this.#button = document.createElement("button");
+    this.#button.className = className;
+    this.#button.innerText = innerText;
+    this.#button.addEventListener("click", callBack);
+  }
+
+  render(){
+    return this.#button;
+  }
+}
+
+// Create the card header.
+class CardHeader{
+  #div;
+  #titleDiv;
+  #titleName;
+  constructor({title}){
+    this.#div = document.createElement("div");
+    this.#div.className = "card_header";
+    
+    this.#titleDiv = document.createElement("div");
+    this.#titleName = document.createElement("p");
+    this.#titleName.textContent = title || "";
+    
+    this.#titleDiv.appendChild(this.#titleName)
+    this.#div.appendChild(this.#titleDiv);
+  }
+
+  render(){
+    return this.#div;
+  }
+}
+
 // params is an object {string: title, string: author, int: pages, boolean: read}
-function createCardBody(book){  
-  // Create the left and right containers
-  const leftDiv = createLeftDiv(); 
-  const rightDiv = createRightDiv(book);
+class CardBody{  
+  #leftSide;
+  #rightSide;
+  #cardBody;
+  constructor(book){
+    this.#cardBody = document.createElement("div");
+    this.#cardBody.className = "card_body";
+    // Create the left and right containers
+    this.#leftSide = this.createLeftDiv(); 
+    this.#rightSide = this.createRightDiv(book);
+  }
 
-  const card = document.createElement("div");
-  card.className = "card_body";
-  card.appendChild(leftDiv);
-  card.appendChild(rightDiv);
+  // Create the left side of the card. This holds the labels for the card details. 
+  createLeftDiv(){
+    const leftDiv = document.createElement("div");
+    leftDiv.className = "left";
 
-  return card;
-}
+    // Create the author label. 
+    const authorDiv = document.createElement("div");
+    const authorLabel = document.createElement("p");
+    authorLabel.textContent = "Author";
+    authorDiv.appendChild(authorLabel);
 
-// Create the right side of the card. This holds the details that the user enters in the form. 
-function createRightDiv(book){
-  const rightDiv = document.createElement("div");
-  rightDiv.className = "right";
-  // Create the card author 
-  const author = document.createElement("div");
-  author.className = "book_information";
-  const author_name = document.createElement("p");
-  author_name.textContent = book.author;
-  author.appendChild(author_name);
-  // Create the card pages
-  const pages = document.createElement("div");
-  pages.className = "book_information";
-  const numberOfPages = document.createElement("p");
-  numberOfPages.textContent = book.pages;
-  pages.appendChild(numberOfPages);
-  // Create the card read status. 
-  const readStatus = document.createElement("div");
-  readStatus.className = "book_information";
-  const read = document.createElement("p");
-  read.textContent = book.read ? "Yes" : "No" ;
-  readStatus.appendChild(read);
+    // Create the number of pages label. 
+    const pagesDiv = document.createElement("div");
+    const pagesLabel = document.createElement("p");
+    pagesLabel.textContent = "Pages";
+    pagesDiv.appendChild(pagesLabel);
 
-  rightDiv.appendChild(author);
-  rightDiv.appendChild(pages);
-  rightDiv.appendChild(readStatus);
+    // Create the read status label.
+    const readStatusDiv = document.createElement("div");
+    const readStatusLabel = document.createElement("p");
+    readStatusLabel.textContent = "Book completed";
+    readStatusDiv.appendChild(readStatusLabel);
 
-  return rightDiv;
-}
+    leftDiv.appendChild(authorDiv);
+    leftDiv.appendChild(pagesDiv);
+    leftDiv.appendChild(readStatusDiv);
 
-// Create the left side of the card. This holds the labels for the card details. 
-function createLeftDiv(){
-  const leftDiv = document.createElement("div");
-  leftDiv.className = "left";
+    return leftDiv;
+  }
 
-  // Create the author label. 
-  const authorDiv = document.createElement("div");
-  const authorLabel = document.createElement("p");
-  authorLabel.textContent = "Author";
-  authorDiv.appendChild(authorLabel);
+  // Create the right side of the card. This holds the details that the user enters in the form. 
+  createRightDiv(book){
+    const rightDiv = document.createElement("div");
+    rightDiv.className = "right";
+    // Create the card author 
+    const author = document.createElement("div");
+    author.className = "book_information";
+    const author_name = document.createElement("p");
+    author_name.textContent = book.author;
+    author.appendChild(author_name);
+    // Create the card pages
+    const pages = document.createElement("div");
+    pages.className = "book_information";
+    const numberOfPages = document.createElement("p");
+    numberOfPages.textContent = book.pages;
+    pages.appendChild(numberOfPages);
+    // Create the card read status. 
+    const readStatus = document.createElement("div");
+    readStatus.className = "book_information";
+    const read = document.createElement("p");
+    read.textContent = book.read ? "Yes" : "No" ;
+    readStatus.appendChild(read);
 
-  // Create the number of pages label. 
-  const pagesDiv = document.createElement("div");
-  const pagesLabel = document.createElement("p");
-  pagesLabel.textContent = "Pages";
-  pagesDiv.appendChild(pagesLabel);
+    rightDiv.appendChild(author);
+    rightDiv.appendChild(pages);
+    rightDiv.appendChild(readStatus);
 
-  // Create the read status label.
-  const readStatusDiv = document.createElement("div");
-  const readStatusLabel = document.createElement("p");
-  readStatusLabel.textContent = "Book completed";
-  readStatusDiv.appendChild(readStatusLabel);
+    return rightDiv;
+  }
 
-  leftDiv.appendChild(authorDiv);
-  leftDiv.appendChild(pagesDiv);
-  leftDiv.appendChild(readStatusDiv);
-
-  return leftDiv;
+  render(){
+    this.#cardBody.appendChild(this.#leftSide);
+    this.#cardBody.appendChild(this.#rightSide);
+    return this.#cardBody;
+  }
 }
 
 // Here, we are adding the books to the DOM. 
-function updateDOM(){
-  const libraryElement = document.querySelector("#library");
-  libraryElement.innerHTML = "";
-  library.forEach( (book, index) => {
-    if(book){
-      const card = new Card(book);
-      // Add the index to the card. This is used for identification throughout the lifecycle of the card. 
-      card.dataset.index = index;
-      libraryElement.appendChild(card);
-    }
-  });
-}
+const DOMStateHandler = (function(){
+  const updateDOM = function(){
+    const libraryElement = document.querySelector("#library");
+    libraryElement.innerHTML = "";
+    library.forEach( (book, index) => {
+      if(book.saveStatus){
+        const card = new Card(book, index);
+        libraryElement.appendChild(card.render());
+      }
+    });
+  }
+
+  emitter.on("newBook", updateDOM);
+  emitter.on("toggleStatus", updateDOM);
+  emitter.on("deletedBook", updateDOM);
+})();
 
 // Nav button
 const navButton = document.querySelector("#nav > button");
@@ -206,10 +350,11 @@ const formSubmitButton = document.querySelector("#formSubmitButton");
 formSubmitButton.addEventListener("click", (e) => {
   e.preventDefault();
   if( formValid() ){
-    addBookToLibrary( getFormData() );
+    library.push(getFormData());
     document.querySelector("form").reset();
     closeModal();
-    updateDOM();
+    // updateDOM();
+    emitter.emit("newBook");
   }else{
     highlightErrors();
   }
@@ -284,4 +429,17 @@ function getFormData(){
   });
 }
 
-updateDOM();
+emitter.emit("newBook");
+
+class Test{
+  #name;
+  constructor({name}){
+    this.#name = name;
+  }
+  set name({name}){
+    this.#name = name;
+  }
+  get name(){
+    return this.#name;
+  }
+}
